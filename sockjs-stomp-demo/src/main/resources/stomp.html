@@ -1,0 +1,46 @@
+<html>
+<meta charset="UTF-8"/>
+<script src="http://cdn.bootcss.com/sockjs-client/1.1.1/sockjs.min.js"></script>
+<script src="http://cdn.bootcss.com/stomp.js/2.3.3/stomp.js"></script>
+<script type="text/javascript">
+    var socket = new SockJS('http://localhost:8080/ws');
+    var stompClient = Stomp.over(socket);
+    <!-- 可以基于其他方式 -->
+    <!-- Stomp.overTCP('localhost', 61613); -->
+    <!-- Stomp.overWS('ws://localhost:61614') -->
+    stompClient.connect({}, function(frame) {
+        stompClient.subscribe('/topic/send', function(message) {
+            setMessageInnerHTML('成功接收 /topic/send 报文，命令：' + message.command + '<br/>头：' + JSON.stringify(message.headers) + '<br/>报文：' + message.body);
+        });
+        stompClient.subscribe('/topic/to-internal', function(message) {
+            setMessageInnerHTML('成功接收 /topic/to-internal 报文，命令：' + message.command + '<br/>头：' + JSON.stringify(message.headers) + '<br/>报文：' + message.body);
+        });
+    });
+
+    //发送消息
+    function send(text, topic) {
+        var message = document.getElementById(text).value;
+        stompClient.send(topic, {}, message);
+        setMessageInnerHTML(topic + " 你发送的消息:" + message);
+    }
+
+    //将消息显示在网页上
+    function setMessageInnerHTML(innerHTML) {
+        document.getElementById('message').innerHTML += innerHTML + '<br/>';
+    }
+
+    // 订阅
+    function subscribe() {
+        stompClient.subscribe('/app/internal', function(message) {
+            setMessageInnerHTML('成功接收 /topic/internal 报文，命令：' + message.command + '<br/>头：' + JSON.stringify(message.headers) + '<br/>报文：' + message.body);
+        });
+    }
+
+</script>
+<input id="retrieve" type="text" />
+<button onclick="send('retrieve', '/app/retrieve')">发送接收</button>
+<input id="to-internal" type="text" />
+<button onclick="send('to-internal', '/app/to-internal')">发送to内部</button>
+<button onclick="subscribe()">订阅内部</button>
+<div id="message"></div>
+</html>
